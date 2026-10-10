@@ -128,15 +128,26 @@ def patch_yaml(path: Path) -> bool:
         return False
     sdxl = (MODELS / "sd_xl_base_1.0_0.9vae.safetensors").as_posix()
     supir = (MODELS / "SUPIR-v0F_fp16.safetensors").as_posix()
-    text = text.replace(
-        "SDXL_CKPT: ~",
+    text = re.sub(
+        r"^SDXL_CKPT:.*$",
         f"SDXL_CKPT: {sdxl}",
-        1,
+        text,
+        count=1,
+        flags=re.MULTILINE,
     )
-    text = text.replace(
-        "SUPIR_CKPT_F: ~",
+    text = re.sub(
+        r"^SUPIR_CKPT_F:.*$",
         f"SUPIR_CKPT_F: {supir}",
-        1,
+        text,
+        count=1,
+        flags=re.MULTILINE,
+    )
+    text = re.sub(
+        r"^SUPIR_CKPT_Q:.*$",
+        "SUPIR_CKPT_Q: ~",
+        text,
+        count=1,
+        flags=re.MULTILINE,
     )
     text = text.replace(
         "spatial_transformer_attn_type: softmax-xformers",
