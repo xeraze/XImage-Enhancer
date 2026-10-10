@@ -1,19 +1,19 @@
-# XImage-Enhancer
+# XImageEnhancer
 
-Self-hosted image enhancement HTTP server. Core is pure Go — no Python required for the default engines.
+Self-hosted image enhancement HTTP server.
 
 Three engines:
 
-- **local** — denoise + unsharp + Lanczos upscale (1:1 / ×2 / ×4). Always available, CPU-only, milliseconds.
-- **ai** — shells out to [Real-ESRGAN ncnn-vulkan](https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan) (a prebuilt C++ binary) for ×4 neural upscale, then resizes to the requested target. Requires the binary to be present.
-- **redraw** (optional, separate Python service) — true generative redraw using [SUPIR](https://github.com/Kijai/SUPIR) (SDXL-based diffusion). See [`redraw/`](redraw/) for setup. Requires an NVIDIA GPU with ≥ 10 GB VRAM.
+- **local** - denoise + unsharp + Lanczos upscale (1:1 / ×2 / ×4). Always available, CPU-only.
+- **ai** - shells out to [Real-ESRGAN ncnn-vulkan](https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan) (a prebuilt C++ binary) for ×4 neural upscale, then resizes to the requested target. Requires the binary to be present.
+- **redraw** (optional, separate Python service) - true generative redraw using [SUPIR](https://github.com/Kijai/SUPIR) (SDXL-based diffusion). See [`redraw/`](redraw/) for setup. Requires an NVIDIA GPU with ≥ 10 GB VRAM.
 
 Originally extracted from the [XDownload](https://github.com/xeraze/XDownload-Web) web project's enhancement feature.
 
 ## Requirements
 
 - Go 1.22+ (to build)
-- (optional, for `engine=ai`) `realesrgan-ncnn-vulkan` binary + models — [download](https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan/releases)
+- (optional, for `engine=ai`) `realesrgan-ncnn-vulkan` binary + models - [download](https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan/releases)
 
 ## Quick start
 
@@ -22,10 +22,10 @@ git clone https://github.com/xeraze/go-image-enhance.git
 cd go-image-enhance
 go build -o enhance-server .
 
-# local-only (no extra binaries needed)
+ local-only (no extra binaries needed)
 ./enhance-server
 
-# with AI engine
+ with AI engine
 REALSR_DIR=/path/to/realesrgan ./enhance-server
 ```
 
@@ -78,14 +78,14 @@ The server reassembles the parts, enhances, stores the result back through the r
 { "resultId": "<hex>", "parts": 2, "type": "image/jpeg" }
 ```
 
-Set `ENHANCE_WORKER` to point at your relay (defaults to the original XDownload worker). The relay itself is a separate Cloudflare Worker — see the worker code in the original project if you need the full big-upload path.
+Set `ENHANCE_WORKER` to point at your relay (defaults to the original XDownload worker). The relay itself is a separate Cloudflare Worker - see the worker code in the original project if you need the full big-upload path.
 
 ## Environment variables
 
 | variable           | default                                              | purpose                          |
 |--------------------|------------------------------------------------------|----------------------------------|
 | `ENHANCE_ADDR`     | `127.0.0.1:8081`                                     | listen address                   |
-| `ENHANCE_API_KEY`  | *(empty — auth disabled)*                            | require `X-Api-Key` header       |
+| `ENHANCE_API_KEY`  | *(empty - auth disabled)*                            | require `X-Api-Key` header       |
 | `ENHANCE_WORKER`   | `https://xdownload-api.xeraze-official.workers.dev`  | relay base for big uploads       |
 | `REALSR_DIR`       | `realesrgan`                                         | directory with Real-ESRGAN binary|
 
@@ -101,7 +101,3 @@ Set `ENHANCE_WORKER` to point at your relay (defaults to the original XDownload 
 - `engine=ai` currently always uses the `realesrgan-x4plus` model at ×4, then Lanczos-resizes down to the requested target if `mode=x2`. If the binary is missing, the endpoint returns `503`.
 - `clean` mode keeps dimensions and applies median denoise + unsharp mask.
 - No database, no temp files left behind (everything runs in `os.MkdirTemp` and is cleaned up).
-
-## License
-
-MIT — see [LICENSE](LICENSE).
