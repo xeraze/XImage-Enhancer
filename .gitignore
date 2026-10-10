@@ -1,3 +1,7 @@
 *.exe
 *.test
 *.out
+redraw/SUPIR/
+redraw/.venv/
+redraw/models/
+redraw/__pycache__/

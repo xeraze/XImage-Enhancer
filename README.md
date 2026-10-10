@@ -1,11 +1,12 @@
-# go-image-enhance
+# XImage-Enhancer
 
-Self-hosted image enhancement HTTP server in pure Go — no Python, no runtime dependencies beyond the optional Real-ESRGAN binary.
+Self-hosted image enhancement HTTP server. Core is pure Go — no Python required for the default engines.
 
-Two engines:
+Three engines:
 
 - **local** — denoise + unsharp + Lanczos upscale (1:1 / ×2 / ×4). Always available, CPU-only, milliseconds.
 - **ai** — shells out to [Real-ESRGAN ncnn-vulkan](https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan) (a prebuilt C++ binary) for ×4 neural upscale, then resizes to the requested target. Requires the binary to be present.
+- **redraw** (optional, separate Python service) — true generative redraw using [SUPIR](https://github.com/Kijai/SUPIR) (SDXL-based diffusion). See [`redraw/`](redraw/) for setup. Requires an NVIDIA GPU with ≥ 10 GB VRAM.
 
 Originally extracted from the [XDownload](https://github.com/xeraze/XDownload-Web) web project's enhancement feature.
 
