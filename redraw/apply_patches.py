@@ -26,7 +26,34 @@ MODELS = ROOT / "models"
 
 def patch_tilevae(path: Path) -> bool:
     text = path.read_text(encoding="utf-8")
-    if "def sdpa_attn_forward" in text:
+    if "def sdpa_attn_forward" in text and "if False: # disabled" in text:
+        # already has SDPA fn; ensure else branch prefers SDPA over xformers
+        old_else = """    else:
+        task_queue.append(('store_res', lambda x: x))
+        task_queue.append(('pre_norm', net.norm))
+        if is_xformers_available:
+            # task_queue.append(('attn', lambda x, net=net: attn_forward_new_xformers(net, x)))
+            task_queue.append(
+                ('attn', lambda x, net=net: xformer_attn_forward(net, x)))
+        elif hasattr(F, "scaled_dot_product_attention"):
+            task_queue.append(('attn', lambda x, net=net: attn_forward_new_pt2_0(net, x)))
+        else:
+            task_queue.append(('attn', lambda x, net=net: attn_forward_new(net, x)))
+        task_queue.append(['add_res', None])"""
+        new_else = """    else:
+        task_queue.append(('store_res', lambda x: x))
+        task_queue.append(('pre_norm', net.norm))
+        if hasattr(F, "scaled_dot_product_attention"):
+            task_queue.append(('attn', lambda x, net=net: sdpa_attn_forward(net, x)))
+        elif is_xformers_available:
+            task_queue.append(
+                ('attn', lambda x, net=net: xformer_attn_forward(net, x)))
+        else:
+            task_queue.append(('attn', lambda x, net=net: attn_forward_new(net, x)))
+        task_queue.append(['add_res', None])"""
+        if old_else in text:
+            path.write_text(text.replace(old_else, new_else, 1), encoding="utf-8")
+            return True
         return False
     fn = '''def sdpa_attn_forward(self, h_):
     q = self.q(h_)
@@ -49,16 +76,6 @@ def patch_tilevae(path: Path) -> bool:
     text = text.replace(
         "task_queue.append(('attn', lambda x, net=net: attn_forward(net, x)))",
         "task_queue.append(('attn', lambda x, net=net: sdpa_attn_forward(net, x)))",
-        1,
-    )
-    text = text.replace(
-        "if False: #isinstance(net, AttnBlock):",
-        "if False: # disabled — use SDPA below",
-        1,
-    )
-    text = text.replace(
-        "elif hasattr(F, 'scaled_dot_product_attention'):",
-        "if hasattr(F, 'scaled_dot_product_attention'):",
         1,
     )
     path.write_text(text, encoding="utf-8")
